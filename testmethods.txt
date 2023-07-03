@@ -1,0 +1,56 @@
+
+validMovesForBoardTest :: Bool
+validMovesForBoardTest =
+  let gameState = GameState Player1 [[X, Empty, O], [Empty, Empty, X], [O, X, Empty]]
+      expectedMoves = [Move Player1 (0, 1), Move Player1 (1, 0), Move Player1 (1, 1), Move Player1 (2, 2)]
+   in validMovesForBoard gameState == expectedMoves
+
+makeMoveTest :: Bool
+makeMoveTest =
+  let gameState = GameState Player1 [[Empty, Empty, Empty], [Empty, Empty, Empty], [Empty, Empty, Empty]]
+      move = Move Player1 (0, 0) -- Prvi potez za igrača Player1 na prvo polje
+      updatedGameState = makeMove move gameState
+      expectedBoard = [[X, Empty, Empty], [Empty, Empty, Empty], [Empty, Empty, Empty]]
+   in board updatedGameState == expectedBoard
+
+updateBoardTest :: Bool
+updateBoardTest =
+  let board = [[Empty, Empty, Empty], [Empty, Empty, Empty], [Empty, Empty, Empty]]
+      updatedBoard = updateBoard board 0 0 X -- Postavlja X na prvo polje
+      expectedBoard = [[X, Empty, Empty], [Empty, Empty, Empty], [Empty, Empty, Empty]]
+   in updatedBoard == expectedBoard
+
+switchPlayerTest :: Bool
+switchPlayerTest =
+  let player1 = Player1
+      player2 = Player2
+      switchedPlayer1 = switchPlayer player1
+      switchedPlayer2 = switchPlayer player2
+   in switchedPlayer1 == player2 && switchedPlayer2 == player1
+
+isGameOverTest :: Bool
+isGameOverTest =
+  let board1 = [[X, Empty, X], [O, X, O], [Empty, Empty, X]] -- X
+      board2 = [[X, X, O], [O, O, X], [X, X, O]] -- O
+      board3 = [[X, O, X], [X, O, O], [O, X, X]] -- Nereseno stanje
+      board4 = [[X, O, X], [X, Empty, O], [Empty, X, O]] -- Nije gotovo
+      board5 = [[Empty, Empty, Empty], [Empty, Empty, Empty], [Empty, Empty, Empty]] -- Pocetna
+   in isGameOver board1 && isGameOver board2 && isGameOver board3 && not (isGameOver board4) && not (isGameOver board5)
+
+testCreateGameTree :: GameState Board -> IO ()
+testCreateGameTree initialState = do
+  let gameTree = createGameTree initialState
+  putStrLn $ "Velicina stabla: " ++ show (size gameTree)
+  putStrLn $ "Visina stabla: " ++ show (height gameTree)
+  putStrLn $ "Broj listova u stablu: " ++ show (leavesCount gameTree)
+  putStrLn $ "Listovi u stablu: " ++ show (leaves gameTree)
+
+main2 :: IO ()
+main2 = do
+  putStrLn "isValidMoveTest: " >> print validMovesForBoardTest
+  putStrLn "makeMoveTest: " >> print makeMoveTest
+  putStrLn "updateBoardTest: " >> print updateBoardTest
+  putStrLn "switchPlayerTest: " >> print switchPlayerTest
+  putStrLn "isGameOverTest: " >> print isGameOverTest
+  let initialState = GameState Player1 emptyBoard
+  testCreateGameTree initialState

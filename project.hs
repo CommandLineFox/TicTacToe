@@ -4,9 +4,10 @@
 import Control.Monad.Identity
 import Control.Monad.State
 import Control.Monad.Trans.State
+import Data.List (transpose)
 
 -- 1. Struktura podataka Rose tree
-data Rose a = Node a [Rose a]
+data Rose a = Node a [Rose a] deriving (Show)
 
 -- Metoda koja vraca broj cvorova u stablu
 size :: Rose a -> Int
@@ -49,7 +50,7 @@ data Player = Player1 | Player2 deriving (Show, Eq)
 data GameState board = GameState {currentPlayer :: Player, board :: board} deriving (Show)
 
 -- Potez u igri
-data Move board = Move {player :: Player, position :: (Int, Int)} deriving (Show)
+data Move board = Move {player :: Player, position :: (Int, Int)} deriving (Show, Eq)
 
 -- State monada za stanje u igri
 newtype GameStateOp board a = GameStateOp {runOp :: GameState board -> (a, GameState board)}
@@ -123,9 +124,13 @@ printBoard board = putStrLn $ unlines $ map formatRow board
     showSymbol O = "O|"
     showSymbol Empty = " |"
 
--- Metod koji vraca listu validnih polja
-validMovesForBoard :: Board -> [Move Board]
-validMovesForBoard board = [Move Player1 (i, j) | i <- [0 .. 2], j <- [0 .. 2], board !! i !! j == Empty]
+-- Metod koji vraca sve validne poteze
+validMovesForBoard :: GameState Board -> [Move Board]
+validMovesForBoard gameState = [Move (currentPlayer gameState) (i, j) | i <- [0 .. 2], j <- [0 .. 2], isValidMove gameState (i, j)]
+
+-- Metod koji proverava da li je polje prazno
+isValidMove :: GameState Board -> (Int, Int) -> Bool
+isValidMove gameState (i, j) = (board gameState !! i !! j) == Empty
 
 -- Metod koji vraca novo stanje table primenom jednog poteza
 makeMove :: Move Board -> GameState Board -> GameState Board
@@ -152,9 +157,9 @@ isGameOver board = isWinningState board || isBoardFull board
     isWinningState :: Board -> Bool
     isWinningState board = any (allEqual . map (\(row, col) -> board !! row !! col)) winningCombinations
 
-    allEqual :: Eq a => [a] -> Bool
+    allEqual :: [Symbol] -> Bool
     allEqual [] = True
-    allEqual (x : xs) = all (== x) xs
+    allEqual (x : xs) = all (\y -> y == x && (y == X || y == O)) xs
 
     winningCombinations :: [[(Int, Int)]]
     winningCombinations =
@@ -177,7 +182,7 @@ createGameTree gameState@(GameState _ board)
   | isGameOver board = Node gameState []
   | otherwise = Node gameState children
   where
-    validMoves = validMovesForBoard board
+    validMoves = validMovesForBoard gameState
     children = map (\move -> createGameTree (makeMove move gameState)) validMoves
 
 -- Startna tabla
